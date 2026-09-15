@@ -11,15 +11,17 @@ import {
   ExternalLink, 
   Clock, 
   AlertCircle,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { VideoItem, AdSettings } from '../types';
+import { sanitizeVideoUrl } from '../lib/videoService';
 
 interface VideoPlayerProps {
   key?: React.Key;
   video: VideoItem;
   adSettings: AdSettings;
-  isAdmin: boolean;
+  isAdmin?: boolean;
   onAdTriggered?: () => void;
   onVideoEnd?: () => void;
 }
@@ -39,6 +41,8 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // -------------------------------------------------------------
   // 7-SECOND AD PAUSE & 30-SECOND AD VERIFICATION STATES
@@ -64,6 +68,8 @@ export function VideoPlayer({
     setAdWatchStarted(false);
     setSecondsRemaining(30);
     setAdCompleted(false);
+    setVideoError(null);
+    setIsLoading(false);
 
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
@@ -73,8 +79,9 @@ export function VideoPlayer({
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.pause();
+      videoRef.current.load();
     }
-  }, [video.id]);
+  }, [video.id, video.videoUrl]);
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -105,8 +112,28 @@ export function VideoPlayer({
   };
 
   const handleLoadedMetadata = () => {
+    setIsLoading(false);
+    setVideoError(null);
     if (videoRef.current) {
       setDuration(videoRef.current.duration || 0);
+    }
+  };
+
+  const handleVideoError = () => {
+    setIsLoading(false);
+    setIsPlaying(false);
+    console.error('Video failed to load:', video.videoUrl);
+    setVideoError('ভিডিও লিঙ্কটি লোড করা যাচ্ছে না। দয়া করে লিঙ্কটি সঠিক সরাসরি (.mp4) ভিডিও কি না পরীক্ষা করুন অথবা অন্য ভিডিও নির্বাচন করুন।');
+  };
+
+  const handleRetryVideo = () => {
+    setVideoError(null);
+    setIsLoading(true);
+    if (videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {
+        setIsLoading(false);
+      });
     }
   };
 
@@ -232,6 +259,8 @@ export function VideoPlayer({
     }
   };
 
+  const playableUrl = sanitizeVideoUrl(video.videoUrl);
+
   return (
     <div className="w-full">
       {/* Video Cinema Container */}
@@ -241,11 +270,17 @@ export function VideoPlayer({
       >
         <video
           ref={videoRef}
-          src={video.videoUrl}
+          src={playableUrl}
           poster={video.thumbnailUrl}
           playsInline
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
+          onLoadStart={() => setIsLoading(true)}
+          onCanPlay={() => {
+            setIsLoading(false);
+            setVideoError(null);
+          }}
+          onError={handleVideoError}
           onEnded={() => {
             setIsPlaying(false);
             if (onVideoEnd) onVideoEnd();
@@ -254,8 +289,34 @@ export function VideoPlayer({
           className="w-full h-full object-contain cursor-pointer"
         />
 
-        {/* Big Center Play Icon (before first play and when ad is not active) */}
-        {!isPlaying && !isAdPaused && (
+        {/* Video Error Message Overlay */}
+        {videoError && (
+          <div className="absolute inset-0 z-35 bg-zinc-950/90 backdrop-blur-sm flex items-center justify-center p-6 text-center">
+            <div className="max-w-md bg-zinc-900 border border-red-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-white font-bold text-base mb-1">ভিডিও প্লে করা যাচ্ছে না</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  {videoError}
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleRetryVideo}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> পুনরায় চেষ্টা করুন
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Big Center Play Icon (before first play and when ad is not active and no error) */}
+        {!isPlaying && !isAdPaused && !videoError && (
           <div 
             onClick={togglePlay}
             className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px] cursor-pointer"

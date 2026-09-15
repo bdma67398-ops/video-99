@@ -45,11 +45,14 @@ export function subscribeToVideos(callback: (videos: VideoItem[]) => void) {
       const list: VideoItem[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
+        const rawUrl = data.videoUrl || '';
+        const cleanUrl = sanitizeVideoUrl(rawUrl);
+
         list.push({
           id: docSnap.id,
           title: data.title || '',
           description: data.description || '',
-          videoUrl: data.videoUrl || '',
+          videoUrl: cleanUrl,
           thumbnailUrl: data.thumbnailUrl || '',
           duration: data.duration || '05:00',
           views: typeof data.views === 'number' ? data.views : 0,
@@ -112,11 +115,13 @@ export async function addVideoToFirestore(video: VideoItem): Promise<void> {
   const videoId = video.id || 'vid-' + Date.now();
   const docRef = doc(db, VIDEOS_COLLECTION, videoId);
   
+  const cleanUrl = sanitizeVideoUrl(video.videoUrl);
+
   await setDoc(docRef, {
     id: videoId,
     title: video.title,
     description: video.description || '',
-    videoUrl: video.videoUrl,
+    videoUrl: cleanUrl,
     thumbnailUrl: video.thumbnailUrl || '',
     duration: video.duration || '05:00',
     views: video.views || 1,
@@ -154,4 +159,48 @@ export async function seedInitialVideos() {
   } catch (err) {
     console.warn('Seeding initial videos error:', err);
   }
+}
+
+// Fallback replacement map for dead/expired external demo URLs
+const BROKEN_URL_MAP: Record<string, string> = {
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4': 'https://vjs.zencdn.net/v/oceans.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4': 'https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4': 'https://cdn.jsdelivr.net/gh/mediaelement/mediaelement-files@master/big_buck_bunny.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4': 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4': 'https://cdn.jsdelivr.net/gh/mediaelement/mediaelement-files@master/echo-hereweare.mp4',
+};
+
+// Check and convert Google Drive share link to direct playable video stream URL
+export function convertGoogleDriveUrl(url: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com')) {
+    const fileIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || 
+                        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      return `https://drive.usercontent.google.com/download?id=${fileIdMatch[1]}&export=download`;
+    }
+  }
+  return trimmed;
+}
+
+// Check and replace broken legacy sample URLs or convert drive links
+export function sanitizeVideoUrl(url: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  
+  // Convert Google Drive sharing links to direct playable media streams
+  const convertedDriveUrl = convertGoogleDriveUrl(trimmed);
+  if (convertedDriveUrl !== trimmed) {
+    return convertedDriveUrl;
+  }
+
+  if (BROKEN_URL_MAP[trimmed]) {
+    return BROKEN_URL_MAP[trimmed];
+  }
+  // If URL points to old non-functional gtv-videos-bucket
+  if (trimmed.includes('gtv-videos-bucket')) {
+    return 'https://vjs.zencdn.net/v/oceans.mp4';
+  }
+  return trimmed;
 }

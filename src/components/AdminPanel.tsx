@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { 
   X, ShieldCheck, Lock, Upload, Plus, Trash2, Check, RefreshCw, 
-  Eye, Film, ExternalLink, Sparkles, LogOut, AlertTriangle
+  Eye, Film, ExternalLink, Sparkles, LogOut, AlertTriangle, CheckCircle2
 } from 'lucide-react';
 import { VideoItem, AdSettings } from '../types';
+import { convertGoogleDriveUrl } from '../lib/videoService';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -117,17 +118,19 @@ export function AdminPanel({
       return;
     }
 
+    const cleanUrl = convertGoogleDriveUrl(videoUrl.trim());
+
     const newVid: VideoItem = {
       id: 'vid-' + Date.now(),
       title: title.trim(),
       description: description.trim() || 'নতুন আপলোড করা ভিডিও।',
-      videoUrl: videoUrl.trim(),
+      videoUrl: cleanUrl,
       thumbnailUrl: thumbnailUrl.trim() || 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&auto=format&fit=crop&q=80',
       duration: duration.trim() || '05:00',
       views: 1,
       uploadDate: 'এইমাত্র',
       category: 'নতুন',
-      isLocal: videoUrl.startsWith('blob:') || videoUrl.startsWith('data:')
+      isLocal: cleanUrl.startsWith('blob:') || cleanUrl.startsWith('data:')
     };
 
     try {
@@ -337,38 +340,38 @@ export function AdminPanel({
                         <button
                           type="button"
                           onClick={() => handleSelectSample({
-                            title: 'প্রকৃতি ও জলপ্রপাতের মায়াবী দৃশ্য | 4K Cinematic Nature',
-                            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-                            thumb: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=800&auto=format&fit=crop&q=80',
-                            dur: '09:56'
+                            title: 'সমুদ্র ও নীল দিগন্তের মায়াবী তরঙ্গ | Oceans 4K',
+                            url: 'https://vjs.zencdn.net/v/oceans.mp4',
+                            thumb: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+                            dur: '00:46'
                           })}
                           className="px-2.5 py-1 text-[11px] rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700/50 transition-colors"
                         >
-                          + প্রকৃতি ও জলপ্রপাত
+                          + সমুদ্রের ঢেউ
                         </button>
                         <button
                           type="button"
                           onClick={() => handleSelectSample({
-                            title: 'আধুনিক সুপারকার ও গতিময় ড্রাইভ | Supercar Showcase',
-                            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-                            thumb: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop&q=80',
-                            dur: '10:53'
+                            title: 'অ্যাডভেঞ্চার স্নোবোর্ডিং ট্রেলার | Blue Moon',
+                            url: 'https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4',
+                            thumb: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&auto=format&fit=crop&q=80',
+                            dur: '02:12'
                           })}
                           className="px-2.5 py-1 text-[11px] rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700/50 transition-colors"
                         >
-                          + সুপারকার ও গতি
+                          + স্নোবোর্ডিং অ্যাডভেঞ্চার
                         </button>
                         <button
                           type="button"
                           onClick={() => handleSelectSample({
-                            title: 'মহাকাশ ও গ্যালাক্সির রহস্য | Cosmic Exploration',
-                            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-                            thumb: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80',
-                            dur: '00:15'
+                            title: 'প্রকৃতি ও খরগোশের অ্যানিমেশন | Big Buck Bunny',
+                            url: 'https://cdn.jsdelivr.net/gh/mediaelement/mediaelement-files@master/big_buck_bunny.mp4',
+                            thumb: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
+                            dur: '10:34'
                           })}
                           className="px-2.5 py-1 text-[11px] rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700/50 transition-colors"
                         >
-                          + কসমিক ও মহাকাশ
+                          + খরগোশের অ্যানিমেশন
                         </button>
                       </div>
                     </div>
@@ -396,11 +399,20 @@ export function AdminPanel({
                         </label>
                         <input
                           type="text"
-                          placeholder="যেমন: https://commondatastorage.googleapis.com/.../video.mp4"
+                          placeholder="যেমন: https://vjs.zencdn.net/v/oceans.mp4 অথবা Google Drive লিংক"
                           value={videoUrl}
                           onChange={(e) => setVideoUrl(e.target.value)}
                           className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-amber-500 mb-2 font-mono"
                         />
+
+                        {videoUrl.includes('drive.google.com') && (
+                          <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>
+                              গুগল ড্রাইভ লিংক চিহ্নিত করা হয়েছে! এটি স্বয়ংক্রিয়ভাবে ভিডিও স্ট্রিমিং মোডে প্লে হবে (ড্রাইভের ফাইলটি <strong>'Anyone with the link'</strong> শেয়ার করা নিশ্চিত করুন)।
+                            </span>
+                          </div>
+                        )}
                         
                         <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1.5 text-xs text-zinc-300">
                           <p className="font-semibold text-amber-400 flex items-center gap-1.5">
@@ -505,9 +517,7 @@ export function AdminPanel({
                         <button
                           type="button"
                           onClick={() => {
-                            if (confirm('আপনি কি ডিফল্ট স্যাম্পল ভিডিওগুলো ফিরিয়ে আনতে চান?')) {
-                              onResetVideos();
-                            }
+                            onResetVideos();
                           }}
                           className="text-xs text-zinc-400 hover:text-amber-400 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-900 transition-colors"
                         >
