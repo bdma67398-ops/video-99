@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Videos collection: anyone can read; anyone (admin in client app) can create/update/delete
+    match /videos/{videoId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Global ad settings: public read, write by admin
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

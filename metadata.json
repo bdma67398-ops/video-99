@@ -1,0 +1,6 @@
+{
+  "name": "Video Portal & Ad Manager",
+  "description": "ক্লাউড ডাটাবেজ সম্বলিত রিয়েলটাইম ভিডিও স্ট্রিমিং ও অ্যাডস্টাররা মনিটাইজেশন প্ল্যাটফর্ম এডমিন প্যানেলসহ (Real-time cloud video streaming and Adsterra monetization portal with live admin management).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "collections": [
+    {
+      "collectionName": "videos",
+      "description": "Video items uploaded by admin and viewable by all users",
+      "securityRules": {
+        "read": "true",
+        "write": "true"
+      },
+      "fields": [
+        { "fieldName": "id", "fieldType": "string", "description": "Unique video ID" },
+        { "fieldName": "title", "fieldType": "string", "description": "Video title" },
+        { "fieldName": "description", "fieldType": "string", "description": "Video description" },
+        { "fieldName": "videoUrl", "fieldType": "string", "description": "Stream URL or MP4 direct link" },
+        { "fieldName": "thumbnailUrl", "fieldType": "string", "description": "Thumbnail poster image URL" },
+        { "fieldName": "duration", "fieldType": "string", "description": "Duration string e.g. 05:20" },
+        { "fieldName": "views", "fieldType": "number", "description": "Number of views" },
+        { "fieldName": "uploadDate", "fieldType": "string", "description": "Date of upload" },
+        { "fieldName": "category", "fieldType": "string", "description": "Category name" },
+        { "fieldName": "createdAt", "fieldType": "number", "description": "Timestamp ms" }
+      ]
+    },
+    {
+      "collectionName": "settings",
+      "description": "Global ad settings and portal configuration",
+      "securityRules": {
+        "read": "true",
+        "write": "true"
+      },
+      "fields": [
+        { "fieldName": "adsterraDirectLink", "fieldType": "string", "description": "Adsterra Direct Link" },
+        { "fieldName": "socialBarEnabled", "fieldType": "boolean", "description": "Social bar toggle" },
+        { "fieldName": "socialBarTitle", "fieldType": "string", "description": "Social bar title" },
+        { "fieldName": "socialBarMessage", "fieldType": "string", "description": "Social bar message" },
+        { "fieldName": "socialBarLink", "fieldType": "string", "description": "Social bar target link" },
+        { "fieldName": "socialBarIcon", "fieldType": "string", "description": "Social bar icon URL" },
+        { "fieldName": "popunderEnabled", "fieldType": "boolean", "description": "Popunder toggle" },
+        { "fieldName": "popunderUrl", "fieldType": "string", "description": "Popunder target URL" },
+        { "fieldName": "bannerTopEnabled", "fieldType": "boolean", "description": "Top banner toggle" },
+        { "fieldName": "bannerTopHtml", "fieldType": "string", "description": "Top banner HTML" },
+        { "fieldName": "bannerTopLink", "fieldType": "string", "description": "Top banner link" },
+        { "fieldName": "bannerTopImage", "fieldType": "string", "description": "Top banner image" },
+        { "fieldName": "bannerBottomEnabled", "fieldType": "boolean", "description": "Bottom banner toggle" },
+        { "fieldName": "bannerBottomHtml", "fieldType": "string", "description": "Bottom banner HTML" },
+        { "fieldName": "bannerBottomLink", "fieldType": "string", "description": "Bottom banner link" },
+        { "fieldName": "bannerBottomImage", "fieldType": "string", "description": "Bottom banner image" },
+        { "fieldName": "nativeBannerEnabled", "fieldType": "boolean", "description": "Native banner toggle" },
+        { "fieldName": "nativeBannerHtml", "fieldType": "string", "description": "Native banner HTML" },
+        { "fieldName": "customScriptCode", "fieldType": "string", "description": "Custom JS tag" }
+      ]
+    }
+  ]
+}
